@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>{{roomID}}</title>
+  <style>
+    #input{
+      position: fixed;
+      bottom: 0;
+      line-height: 100px;
+      width: 90%;
+      font-size: 30px;
+    }
+    #add-img{
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      line-height: 80px;
+      width: 80px;
+      font-size: 40px;
+      height: 80px;
+    }
+    #img{
+      display: none;
+    }
+    #message img{
+      width: 70px;
+      height: 70px;
+    }
+    #date{
+      position: fixed;
+      right: 0;
+    }
+  </style>
+</head>
+<body>
+  {{md5}}
+  <div id="message">
+    <input id="input" type="text">
+  </div>
+  <input id="img" type="file" accept=".jpg, .jpeg, .png" onchange="showIMG(this)" />
+  <input id="add-img" type="button" value="+">
+
+  <link rel="stylesheet" href="CSS/zoomify.css">
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/jquery.js"></script>
+  <script src="/js/zoomify.js"></script>
+  <script src="/js/moment.js"></script>
+  <script>
+    
+   
+    const ip = `http://localhost:3000/{{shop}}`;
+
+    const COLORS = [
+      '#e21400', '#91580f', '#f8a700', '#f78b00',
+      '#58dc00', '#287b00', '#a8f07a', '#4ae8c4',
+      '#3b88eb', '#3824aa', '#a700ff', '#d300e7'
+    ];
+    //创建一个socket客户端
+    const socket = io(ip);
+      
+    //连接成功
+    socket.on('connect', function log(){
+      console.log(`socket--id--${socket.id}`);
+      const data = {
+        id: '{{uid}}',
+        roomID: `{{roomID}}`
+      }
+      socket.emit('join', data);
+
+
+      const consultingData = {
+        shop: '{{shop}}',
+        uid: '{{uid}}',
+        goods: '{{goods}}',
+        md5: '{{md5}}'
+      }
+      //数据库相关
+      socket.emit('user_time', consultingData);
+
+      console.log(`{{userName}}用户进入{{roomID}}房间`);
+
+      
+    });
+
+    const $input = document.getElementById('input');
+    const $window = $(window);
+    const $message = $('#message');
+    const $addImg = $('#add-img');
+    const $img = $('#img');
+
+    //输入框聚焦
+    $input.focus();
+
+
+    
+    //监听键盘事件
+    $window.keydown(function monitor(event){
+      if (!(event.ctrlKey || event.metaKey || event.altKey)) {
+        $input.focus;
+      }
+
+      if(event.which === 13){
+        //发送消息并显示
+        if($input.value !== ''){
+          const message = $input.value;
+
+          $message.append(`<p>{{uid}}   ${message}   <em id="date">${moment().format('MMMM Do YYYY, h:mm:ss')}</em></p>`);
+
+          console.log('{{md5}}')
+          const db = {
+            shop: '{{shop}}',
+            id: '{{uid}}',
+            message,
+            md5: '{{md5}}'
+          }
+
+          const data = {
+            shop: '{{shop}}',
+            id: '{{uid}}',
+            message,
+            roomID: '{{roomID}}',
+            md5: '{{md5}}'
+          }
+          socket.emit('new_message', data, db);
+          
+          $input.value = '';
+
+          //数据库相关
+          //socket.emit('save_user_message', userMessage);
+          //console.log($message.viewHeight + '----' + document.getElementById('message').scrollHeight);
+          //document.getElementById('message').scrollTop = document.getElementById('message').scrollHeight;
+        }
+      }
+      else{
+        console.log('正在输入');
+      }
+    });
+
+    //接收新消息
+    socket.on('new_message', function message(data){
+      const serviceMessage = {
+        goods: '{{roomID}}',
+        id: '{{uid}}',
+        message
+      }
+
+      console.log(`接收姓名${data.id}::消息${data.message}`);
+      $message.append(`<p>${data.id}   ${data.message}   <em id="date">${moment().format('MMMM Do YYYY, h:mm:ss')}</em></p>`);
+    });
+    
+    //接受图片
+    socket.on('img-message', function img(data){
+      $message.append(`<p>${data.id}  <img src="${data.img}" class="img-rounded" alt="">   <em id="date">${moment().format('MMMM Do YYYY, h:mm:ss')}</em></p>`); 
+      $('#message img').zoomify();
+    });
+    //发送消息（图片版）
+    $addImg.click(function img(){
+      $img.click();
+    });
+    const showIMG = function show(file){
+      const data = {
+        md5: '{{md5}}',
+        id: '{{uid}}',
+        roomID: '{{roomID}}'
+      }
+      if(file.files && file.files[0]){
+        const reader = new FileReader();
+        const a = new FileReader();
+        a.readAsArrayBuffer(file.files[0])
+
+        
+        reader.readAsDataURL(file.files[0]);
+        
+        console.log(file.files[0].type)
+        reader.onload = function message(evt){
+          data.img = this.result;
+          console.log('----------------')
+          console.log(evt)
+          console.log(evt.target)
+          console.log(data.img)
+          data.name = file.files[0].name;
+          $message.append(`<p>{{uid}}  <img src="${evt.target.result}" class="img-rounded" alt="">   <em id="date">${moment().format('MMMM Do YYYY, h:mm:ss')}</em></p>`); 
+
+          $('#message img').zoomify();
+
+          socket.emit('img-message', data);
+        }
+      }
+    }
+
+  </script>
+</body>
+</html>

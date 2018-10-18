@@ -87,11 +87,12 @@
     //创建一个socket客户端
     const socket = io(ip);
     
+    //点击会响应input按钮的file属性
     $('.btn.btn-primary.btn-flat').click(() => {
         $('#img-file').click();
     });
 
-    //连接成功
+    //连接成功，发送信息给服务器端
     socket.on('connect', function log(){
       console.log(`socket--id--${socket.id}`);
       const data = {
@@ -110,10 +111,10 @@
       //数据库相关
       socket.emit('user_time', consultingData);
 
-      console.log(`{{userName}}用户进入{{roomID}}房间`);
+      //console.log(`{{userName}}用户进入{{roomID}}房间`);
     });
     
-    //监听键盘事件
+    //监听键盘事件，并把发送的信息显示在页面上
     $window.keydown(function monitor(event){
       if (!(event.ctrlKey || event.metaKey || event.altKey)) {
           $form_control.focus();
@@ -125,7 +126,7 @@
         //发送消息并显示
         if(message !== ''){
           
-          $direct_chat_messages.append(`<div class="direct-chat-msg"><div class="direct-chat-info clearfix"><span class="direct-chat-name pull-left">{{id}}</span> <span class="direct-chat-timestamp pull-right">${moment().format('MMMM Do YYYY, h:mm:ss')}</span></div><img class="direct-chat-img" src="../img/u.png" alt="message user image"><div class="direct-chat-text">${message}</div></div>`);
+          $direct_chat_messages.append(`<div class="direct-chat-msg"><div class="direct-chat-info clearfix"><span class="direct-chat-name pull-left">{{id}}</span> <span class="direct-chat-timestamp pull-right">${moment().format('MMMM Do YYYY, h:mm:ss')}</span></div><img class="direct-chat-img" src="../dist/img/user1-128x128.jpg" alt="message user image"><div class="direct-chat-text">${message}</div></div>`);
           
           const db = {
               shop: '{{shop}}',
@@ -157,17 +158,18 @@
       }
     });
 
-    //接收新消息
+    //接收新消息，并把信息显示在页面上
     socket.on('new_message', function message(data){
       const serviceMessage = {
         goods: '{{roomID}}',
         id: '{{uid}}',
         message
       }
-      $direct_chat_messages.append(`<div class="direct-chat-msg right"><div class="direct-chat-info clearfix"><span class="direct-chat-name pull-right">${data.id}</span><span class="direct-chat-timestamp pull-left">${moment().format('MMMM Do YYYY, h:mm:ss')}</span></div><img class="direct-chat-img"src="../img/u.png"alt="message user image"><div class="direct-chat-text">${data.message}</div></div>`);
+      $direct_chat_messages.append(`<div class="direct-chat-msg right"><div class="direct-chat-info clearfix"><span class="direct-chat-name pull-right">${data.id}</span><span class="direct-chat-timestamp pull-left">${moment().format('MMMM Do YYYY, h:mm:ss')}</span></div><img class="direct-chat-img"src="../dist/img/user3-128x128.jpg"alt="message user image"><div class="direct-chat-text">${data.message}</div></div>`);
       $('.direct-chat-messages.chat-window').scrollTop(9999);
-      
-      });
+    });
+
+    //把图片显示在网页上，并发送给服务器端
     $('#img-file').change(function() {
       const data = {
           md5: '{{md5}}',
@@ -214,7 +216,7 @@
         }
     })
 
-    //接收图片
+    //接收图片，并把接收的图片显示在页面上
     socket.on('img-message', function img(data){
       $direct_chat_messages.append(`<div class="direct-chat-msg right"><div class="direct-chat-info clearfix"><span class="direct-chat-name pull-right">${data.id}</span><span class="direct-chat-timestamp pull-left">${moment().format('MMMM Do YYYY, h:mm:ss')}</span></div><img class="direct-chat-img"src="../dist/img/user3-128x128.jpg"alt="message user image"><div class="direct-chat-text"><img src="${data.img}" class="img-rounded" alt=""></div></div>`); 
            
