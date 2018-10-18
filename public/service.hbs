@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link rel="stylesheet" href="/css/bootstrap.css">
+  <link rel="stylesheet" href="/css/font-awesome.css">
+  <link rel="stylesheet" href="/css/AdminLTE.css">
+  <link rel="stylesheet" href="/css/normalize.css">
+  <title>{{roomID}}</title>
+  <style>
+    #img-file{
+      display: none;
+      
+    }
+    .img-rounded{
+        width: 100px;
+    }
+    #curtain{
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: #00000059;
+        width: 100%;
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+  </style>
+</head>
+<body>
+  {{md5}}
+  <div class="container">
+  <div class="row">
+      <div class="col-xs-12">
+        <div class="box box-primary box-solid direct-chat direct-chat-primary">
+          <div class="box-header with-border">
+            <h3 class="box-title">{{roomID}}</h3>
+            
+          </div>
+          <div class="box-body">
+            <div class="direct-chat-messages chat-window">
+            </div>
+            <div class="direct-chat-contacts chat-window">
+              <ul class="contacts-list">
+              </ul>
+            </div>
+          </div>
+          <div class="box-footer">
+            <div class="input-group">
+              <input type="text" name="message" placeholder="请输入" class="form-control"><span class="input-group-btn"><button type="button" class="btn btn-primary btn-flat">图片</button></span>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+  </div>
+  <input id="img-file" type="file" accept=".jpg, .jpeg, .png" />
+  <div id="curtain"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/jquery.js"></script>
+  <script src="/js/bootstrap.js"></script>
+  
+  <script src="/js/adminlte.js"></script>
+  <script src="/js/moment.js"></script>
+  <script>
+    const $form_control = $('.form-control');
+    const $window = $(window);
+    console.log(window.innerHeight);
+    const $chat_window = $('.chat-window');
+    const ip = `http://localhost:3000/{{shop}}`;
+    
+    
+    
+    const $direct_chat_messages = $('.direct-chat-messages');
+    //创建一个socket客户端
+    const socket = io(ip);
+    
+    $('.btn.btn-primary.btn-flat').click(() => {
+        $('#img-file').click();
+    });
+
+    //连接成功
+    socket.on('connect', function log(){
+      console.log(`socket--id--${socket.id}`);
+      const data = {
+        id: '{{uid}}',
+        roomID: `{{roomID}}`
+      }
+      socket.emit('join', data);
+
+
+      const consultingData = {
+        shop: '{{shop}}',
+        uid: '{{uid}}',
+        goods: '{{goods}}',
+        md5: '{{md5}}'
+      }
+      //数据库相关
+      socket.emit('user_time', consultingData);
+
+      console.log(`{{userName}}用户进入{{roomID}}房间`);
+
+      
+    });
+
+    
+
+
+    
+    //监听键盘事件
+    $window.keydown(function monitor(event){
+      if (!(event.ctrlKey || event.metaKey || event.altKey)) {
+          $form_control.focus();
+      }
+
+      if(event.which === 13){
+
+        //发送消息并显示
+        if($form_control.val() !== ''){
+          const message = $form_control.val();
+          
+          $direct_chat_messages.append(`<div class="direct-chat-msg"><div class="direct-chat-info clearfix"><span class="direct-chat-name pull-left">{{id}}</span> <span class="direct-chat-timestamp pull-right">${moment().format('MMMM Do YYYY, h:mm:ss')}</span></div><img class="direct-chat-img" src="../dist/img/user1-128x128.jpg" alt="message user image"><div class="direct-chat-text">${message}</div></div>`);
+          
+          const db = {
+              shop: '{{shop}}',
+              id: '{{id}}',
+              message,
+              md5: '{{md5}}'
+          }
+
+          const data = {
+              shop: '{{shop}}',
+              id: '{{id}}',
+              message,
+              roomID: '{{roomID}}',
+              md5: '{{md5}}'
+          }
+
+          socket.emit('new_message', data, db);
+          
+          
+          $form_control.val('');
+        }
+      }
+      else{
+          console.log('正在输入');
+      }
+    });
+
+    //接收新消息
+    socket.on('new_message', function message(data){
+      const serviceMessage = {
+        goods: '{{roomID}}',
+        id: '{{uid}}',
+        message
+      }
+      $direct_chat_messages.append(`<div class="direct-chat-msg right"><div class="direct-chat-info clearfix"><span class="direct-chat-name pull-right">${data.id}</span><span class="direct-chat-timestamp pull-left">${moment().format('MMMM Do YYYY, h:mm:ss')}</span></div><img class="direct-chat-img"src="../dist/img/user3-128x128.jpg"alt="message user image"><div class="direct-chat-text">${data.message}</div></div>`);
+
+      
+      });
+    $('#img-file').change(function() {
+      const data = {
+          md5: '{{md5}}',
+          id: '{{id}}',
+          roomID: '{{roomID}}'
+      }
+      const file = this;
+      if(file.files && file.files[0]){
+          console.log(999)
+          const reader = new FileReader();
+          reader.readAsDataURL(file.files[0]);
+
+          reader.onload = function message(evt){
+              data.img = this.result;
+              data.name = file.files[0].name;
+              $direct_chat_messages.append(`<div class="direct-chat-msg"><div class="direct-chat-info clearfix"><span class="direct-chat-name pull-left">{{id}}</span> <span class="direct-chat-timestamp pull-right">${moment().format('MMMM Do YYYY, h:mm:ss')}</span></div><img class="direct-chat-img" src="../dist/img/user1-128x128.jpg" alt="message user image"><div class="direct-chat-text"><img src="${evt.target.result}" class="img-rounded" alt=""></div></div>`); 
+              
+              
+              $('.img-rounded').mouseenter(function() {
+                  $(this).css({
+                      'cursor': 'zoom-in'
+                  })
+              }).click(function() {
+                  $('#curtain').css({
+                      'height': `${window.innerHeight}`,
+                      'cursor': 'zoom-out'
+                  })
+                  .html(`<div id="original"><img src="${$(this).attr('src')}"  alt=""></div></div>`)
+                  .click(function(event) {
+                      $(this).html('').css({
+                      'height': '0'
+                      });
+                  });
+
+                  $('#original img').click(function (e){
+                      e.stopPropagation();
+                      
+                  });
+              });
+
+              
+              socket.emit('img-message', data);
+            }
+        }
+    })
+
+    //接受图片
+    socket.on('img-message', function img(data){
+      $direct_chat_messages.append(`<div class="direct-chat-msg right"><div class="direct-chat-info clearfix"><span class="direct-chat-name pull-right">${data.id}</span><span class="direct-chat-timestamp pull-left">${moment().format('MMMM Do YYYY, h:mm:ss')}</span></div><img class="direct-chat-img"src="../dist/img/user3-128x128.jpg"alt="message user image"><div class="direct-chat-text"><img src="${data.img}" class="img-rounded" alt=""></div></div>`); 
+           
+      $('.img-rounded').mouseenter(function() {
+          $(this).css({
+              'cursor': 'zoom-in'
+          })
+      }).click(function() {
+          $('#curtain').css({
+              'height': `${window.innerHeight}`,
+              'cursor': 'zoom-out'
+          }).html(`<div id="original"><img src="${$(this).attr('src')}"  alt=""></div></div>`).click(function() {
+              $(this).html('').css({
+              'height': '0'
+              });
+          });
+      });
+    });
+    
+
+  </script>
+</body>
+</html>

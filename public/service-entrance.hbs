@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>{{shop}}</title>
+</head>
+<body>
+  <form id="form"  >
+    
+    <h4>客服人员入口</h4>
+    用户名称：<input id="uid" name="uid" value="{{uid}}" required>
+    客服名称：<input id="id" name="id"  required>
+    店铺：<input id="shop" name="shop" value="{{shop}}" required>
+    房间：<input id="roomID" name="roomID" value="{{roomID}}" required>
+    商品：<input id="goods" name="goods" value="{{goods}}" required>
+    md5：<input id="md5" name="md5" value="{{md5}}" >
+    
+    <!--
+      MD5:<input id="md5" name="md5" value="{{md5}}" required>
+
+      -->
+    
+    <input id="user" type="button" value="用户入口">
+    <input id="service" type="button" value="客服入口">
+    
+  </form>
+  <script src="/js/jquery.js"></script>
+  <script>
+    $('#service').click(function(){
+      $('#form').attr('method', `GET`);
+      $('#form').attr('target', `_blank`);
+      $('#form').attr('action', `/roomList`);
+      $('#form').submit();
+    });
+    
+    $('#user').click(function(){
+      $('#form').attr('method', `POST`);
+      $('#form').attr('target', `_blank`);
+      $('#form').attr('action', `/user`);
+      $('#form').submit();
+    });
+  </script> 
+
+  
+</body>
+</html>

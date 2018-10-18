@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>界面</title>
+</head>
+<body>
+    <p>数量<i id="num">0</i></p>
+    <input type="text" value="" id="name">
+    <input type="button" value="增加" id="add">
+    <input type="button" value="关闭" id="close">
+    <div id="list">
+        <ul>
+
+        </ul>
+    </div>
+  
+  <script src="/js/jquery.js"></script>
+  <script>
+    (function mian(){
+        $.ajax({
+            url: '/server/show',
+            type: 'GET',
+            success: function message(data){
+                $('#list').html('')
+                for(let i = 0; i < data.length; i++){
+                    $('#list').append(`<li><a href='${ip}${data[i]}' target='_blank'>${data[i]}</a></li>`)
+                }
+                $('#num').text(data.length);
+                console.log('show成功了')
+            },
+            error: function(){
+                console.log('show???????????????')
+            }
+        });
+        let num = 0;
+        const ip = 'http://localhost:3000/user-entrance?shop=';
+        $('#add').click(function show(){
+            $.ajax({
+                url: '/server/add',
+                type: 'GET',
+                data: {name : $('#name').val()},
+                success:function(){
+                    console.log('成功了')
+                    $('#name').val('')
+                },
+                error: function(){
+                    console.log('???????????????')
+                }
+            });
+            $.ajax({
+                url: '/server/show',
+                type: 'GET',
+                success: function message(data){
+                    $('#list').html('')
+                    for(let i = 0; i < data.length; i++){
+                        $('#list').append(`<li><a href='${ip}${data[i]}' target='_blank'>${data[i]}</a></li>`)
+                    }
+                    $('#num').text(data.length);
+                    console.log('show成功了')
+                },
+                error: function(){
+                    console.log('show???????????????')
+                }
+            });
+        })
+        $('#close').click(function show(){
+            $.ajax({
+                url: '/server/close',
+                type: 'GET',
+                success:function(){
+                    $('#list').html('');
+                    num = 0;
+                },
+                error: function(){
+                    console.log('关闭???????????????')
+                }
+            });
+        })
+    })();
+    
+  </script> 
+
+  
+</body>
+</html>
